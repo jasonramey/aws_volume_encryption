@@ -132,7 +132,7 @@ def main(argv):
             Description='Snapshot of volume ({})'.format(volume.id),
         )
         
-        waiter_snapshot_complete.config.max_attempts = 240
+        waiter_snapshot_complete.config.max_attempts = 720
     
         try:
             waiter_snapshot_complete.wait(
@@ -248,6 +248,8 @@ def main(argv):
     except botocore.exceptions.WaiterError as e:
         sys.exit('ERROR: {}'.format(e))
     
+    raw_input('Hit enter to continue on to removing old volumes & snapshots...')
+
     """ Step 7: Clean up """
     print('---Clean up resources')
     for cleanup in volume_data:
