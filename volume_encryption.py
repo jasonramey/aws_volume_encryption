@@ -86,6 +86,11 @@ def main(argv):
     volumes = [v for v in instance.volumes.all()]
     for volume in volumes:
         volume_encrypted = volume.encrypted
+        if volume_encrypted:
+            print(
+                '**Volume ({}) is already encrypted'
+                .format(volume.id))
+            continue
         
         current_volume_data = {}
         for mapping in all_mappings:
@@ -96,11 +101,6 @@ def main(argv):
                     'DeviceName': mapping['DeviceName'],
                 }        
                  
-        if volume_encrypted:
-            sys.exit(
-                '**Volume ({}) is already encrypted'
-                .format(volume.id))
-
         """ Step 1: Prepare instance """
     
         # Exit if instance is pending, shutting-down, or terminated
