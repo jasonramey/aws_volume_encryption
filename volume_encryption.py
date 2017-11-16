@@ -28,6 +28,8 @@ def main(argv):
                         help='Profile to use', required=False)
     parser.add_argument('-r', '--region',
                         help='Region of source volume', required=True)
+    parser.add_argument('-s', '--stopped', 
+                        help='Remain stopped after conversion', action='store_true')
     args = parser.parse_args()
 
     """ Set up AWS Session + Client + Resources + Waiters """
@@ -236,19 +238,19 @@ def main(argv):
                 },
             ],
         )
-    """ Step 6: Start instance """
-    print('---Start instance')
-    instance.start()
-    try:
-        waiter_instance_running.wait(
-            InstanceIds=[
-                instance_id,
-            ]
-        )
-    except botocore.exceptions.WaiterError as e:
-        sys.exit('ERROR: {}'.format(e))
-    
-    raw_input('Hit enter to continue on to removing old volumes & snapshots...')
+    if args.stopped == False:
+        """ Step 6: Start instance """
+        print('---Start instance')
+        instance.start()
+        try:
+            waiter_instance_running.wait(
+                InstanceIds=[
+                    instance_id,
+                ]
+            )
+        except botocore.exceptions.WaiterError as e:
+            sys.exit('ERROR: {}'.format(e))
+        input('Hit enter to continue on to removing old volumes & snapshots...')
 
     """ Step 7: Clean up """
     print('---Clean up resources')
