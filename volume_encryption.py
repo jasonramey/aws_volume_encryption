@@ -28,6 +28,8 @@ def main(argv):
                         help='Profile to use', required=False)
     parser.add_argument('-r', '--region',
                         help='Region of source volume', required=True)
+    parser.add_argument('-s', '--stopped', 
+                        help='Remain stopped after conversion', action='store_true')
     args = parser.parse_args()
 
     """ Set up AWS Session + Client + Resources + Waiters """
@@ -84,6 +86,11 @@ def main(argv):
     volumes = [v for v in instance.volumes.all()]
     for volume in volumes:
         volume_encrypted = volume.encrypted
+        if volume_encrypted:
+            print(
+                '**Volume ({}) is already encrypted'
+                .format(volume.id))
+            continue
         
         current_volume_data = {}
         for mapping in all_mappings:
@@ -94,11 +101,6 @@ def main(argv):
                     'DeviceName': mapping['DeviceName'],
                 }        
                  
-        if volume_encrypted:
-            sys.exit(
-                '**Volume ({}) is already encrypted'
-                .format(volume.id))
-
         """ Step 1: Prepare instance """
     
         # Exit if instance is pending, shutting-down, or terminated
@@ -236,19 +238,19 @@ def main(argv):
                 },
             ],
         )
-    """ Step 6: Start instance """
-    print('---Start instance')
-    instance.start()
-    try:
-        waiter_instance_running.wait(
-            InstanceIds=[
-                instance_id,
-            ]
-        )
-    except botocore.exceptions.WaiterError as e:
-        sys.exit('ERROR: {}'.format(e))
-    
-    raw_input('Hit enter to continue on to removing old volumes & snapshots...')
+    if args.stopped == False:
+        """ Step 6: Start instance """
+        print('---Start instance')
+        instance.start()
+        try:
+            waiter_instance_running.wait(
+                InstanceIds=[
+                    instance_id,
+                ]
+            )
+        except botocore.exceptions.WaiterError as e:
+            sys.exit('ERROR: {}'.format(e))
+        input('Hit enter to continue on to removing old volumes & snapshots...')
 
     """ Step 7: Clean up """
     print('---Clean up resources')
